@@ -1,0 +1,23 @@
+---
+- hosts: all
+  remote_user: ec2-user
+  tasks: 
+    - name: Verify
+  tasks:
+    - name: Check httpd package
+      debug:
+      msg: "{{ ansible_facts.packages['httpd'] | length }} versions of httpd are installed!"
+    when: "'httpd' in ansible_facts.packages"
+    - name: Check httpd service
+      service:
+        name: httpd
+        state: started
+        enabled: yes
+    - name: Check webpages
+      uri:
+        url: http://localhost.com
+        return_content: yes
+      register: this
+    failed_when: "'AWESOME' not in this.content"
+  roles:
+    - webserver
