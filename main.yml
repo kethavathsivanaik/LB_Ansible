@@ -1,0 +1,59 @@
+- hosts: localhost
+  vars_files:
+  - secure.yml
+  vars_prompt: 
+  - name: webservers
+    prompt: Number of WebServers want to Launch in AWS? 
+    private: false
+  - name: loadbalancers
+    prompt: Number of LoadBalancers want to Launch in AWS?  
+    private: false
+    
+  pre_tasks:
+  - name: Provision WebServer in AWS
+    ec2:
+      instance_tags:
+        Name: WebServer 
+      key_name: "keypair_docker_webserver"
+      instance_type: "t2.micro"
+      image: "ami-09a7bbd08886aafdf"
+      wait: yes
+      count: "{{ webservers }}"
+      vpc_subnet_id: "subnet-9e9fa5f6"
+      assign_public_ip: yes
+      state: present
+      region: "ap-south-1"
+      group_id: "sg-02548637202b85d22"
+      aws_access_key: "{{ access_key }}"
+      aws_secret_key: "{{ secret_key }}"
+  - name: Provision LoadBalancer in AWS
+    ec2:
+      instance_tags:
+        Name: LoadBalancer
+      key_name: "keypair_docker_webserver"
+      instance_type: "t2.micro"
+      image: "ami-09a7bbd08886aafdf"
+      wait: yes
+      count: "{{ loadbalancers }}"
+      vpc_subnet_id: "subnet-9e9fa5f6"
+      assign_public_ip: yes
+      state: present
+      region: "ap-south-1"
+      group_id: "sg-02548637202b85d22"
+      aws_access_key: "{{ access_key }}"
+      aws_secret_key: "{{ secret_key }}"
+  - name: Wait to Completely Provision Instances
+    pause:
+      minutes: 2
+  - name: Refresh Inventory
+    meta: refresh_inventory
+
+- hosts: tag_Name_WebServer
+  roles: 
+  - role: webserver
+- hosts: tag_Name_LoadBalancer
+  roles:
+  - role: lbserver
+            
+
+

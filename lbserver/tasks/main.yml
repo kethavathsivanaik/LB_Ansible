@@ -1,0 +1,26 @@
+---
+# tasks file for lbserver
+#
+- name: Install haproxy
+  package:
+    name: haproxy
+    state: present
+
+- name: Change port
+  replace:
+    path: /etc/haproxy/haproxy.cfg
+    regexp: '^frontend  main \*:5000'
+    replace: 'frontend  main *:8080'
+  notify: Refresh
+
+- name: Add Webservers 
+  replace: 
+    path: /etc/haproxy/haproxy.cfg
+    regexp: '^    server  app1 127.0.0.1:5001 check\n    server  app2 127.0.0.1:5002 check\n    server  app3 127.0.0.1:5003 check\n    server  app4 127.0.0.1:5004 check'
+    replace: "{% for i in groups['tag_Name_WebServer'] %}\n    server  app{{ loop.index }} {{i}}:80 check\n{% endfor %}"
+
+- name: Start Service
+  service:
+    name: haproxy
+    state: started
+
